@@ -1,0 +1,116 @@
+Program.Sub.ScreenSU.Start
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+'Coded by: WAW
+'Date: 5/18/2015
+'This is a custom GAB script that will, on the Supply and Demand screen display additional information using hidden controls
+
+'open connection to the database
+F.ODBC.Connection!con.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+
+'if the populate hook is fired, display the hidden controls
+F.Intrinsic.Control.If(V.Caller.Hook,=,14045)
+
+	'set the properties of the drawing no. label
+	V.Passed.GAB-LBL-1.Set("Drawing No.")
+	F.Intrinsic.Variable.SetProperty("GAB-LBL-1","PL",827)
+	F.Intrinsic.Variable.SetProperty("GAB-LBL-1","PT",45)
+
+	'set properties of the drawing no textbox
+	F.Intrinsic.Variable.SetProperty("GAB-TEXT-1","PL",827)
+	F.Intrinsic.Variable.SetProperty("GAB-TEXT-1","PT",65)
+	F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-TEXT-1,"HIDE",0)
+	F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-TEXT-1,"LOCK",1)
+
+	'set the properties of the weight lable
+	V.Passed.GAB-LBL-2.Set("Weight")
+	F.Intrinsic.Variable.SetProperty("GAB-LBL-2","PL",827)
+	F.Intrinsic.Variable.SetProperty("GAB-LBL-2","PT",85)
+
+	'set properties of the weight textbox
+	F.Intrinsic.Variable.SetProperty("GAB-TEXT-2","PL",827)
+	F.Intrinsic.Variable.SetProperty("GAB-TEXT-2","PT",105)
+	F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-TEXT-2,"HIDE",0)
+	F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-TEXT-2,"LOCK",1)
+
+F.Intrinsic.Control.EndIf
+
+'if a part has been selected display the drawing no and weight in the hidden textboxes
+F.Intrinsic.Control.If(V.Caller.Hook,=,14051)
+
+	'declare local variables.
+	V.Local.sDrawingNo.Declare(String)
+	V.Local.sWeight.Declare(String)
+	V.Local.spart.Declare(String)
+	V.local.srev.Declare(String)
+	V.Local.spartnew.Declare(String)
+	V.Local.ssql.Declare(String)
+
+	V.Local.spart.Set(V.Passed.000003)
+	F.Intrinsic.String.RPad(V.Local.spart," ",17,V.Local.spart)
+	V.Local.srev.Set(V.Passed.000099)
+	F.Intrinsic.String.Build("{0}{1}",V.Local.spart,V.Local.srev,V.Local.spartnew)
+
+	F.Intrinsic.String.Build("SELECT TEXT_INFO1, LBS from INVENTORY_MST2 where PART = '{0}'",V.Local.spartnew,V.Local.ssql)
+	F.ODBC.Connection!con.OpenRecordsetRO("rst",V.Local.ssql)
+	F.Intrinsic.Control.If(V.ODBC.con!rst.EOF,=,False)
+		V.Local.sDrawingNo.Set(V.ODBC.con!rst.FieldValTrim!TEXT_INFO1)
+		V.Local.sWeight.Set(V.ODBC.con!rst.FieldValTrim!LBS)
+		V.passed.GAB-TEXT-1.Set(V.Local.sdrawingno.Trim)
+		V.Passed.GAB-TEXT-2.Set(V.Local.sWeight.Trim)
+	F.intrinsic.Control.EndIf
+
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.CallSub(Unload)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3964_Piv_Pnt_Add_Info.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(Unload)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Main.End
+
+Program.Sub.Unload.Start
+F.Intrinsic.Control.SetErrorHandler("Unload_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+'closes the connection to the database
+F.ODBC.Connection!con.Close
+
+'closes the program
+F.Intrinsic.Control.End
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Unload_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3964_Piv_Pnt_Add_Info.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.End
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Unload.End
+
+Program.Sub.Comments.Start
+${$0$}$NewScript.ga$}$WAW$}$5/18/2015
+Program.Sub.Comments.End
+
